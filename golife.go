@@ -59,6 +59,11 @@ func main() {
 	CHANNEL, _ := c.GetString("parameters", "channel")
 	USER, _ := c.GetString("parameters", "user")
 
+	//welcome message
+	welcome, _ := c.GetBool("parameters", "welcome")
+	welcome_msg, _ := c.GetString("parameters", "message")
+	fmt.Printf("Welcome Message: %s \n", welcome_msg)
+
 	fmt.Printf("Starting IRC Bot...\n")
 	fmt.Printf("Connecting to: %s \n", SERVER)
 	fmt.Printf("Nickname is: %s \n", NICK)
@@ -96,6 +101,17 @@ func main() {
 					fmt.Printf("PONG :%s\n", arraypong[1])
 					writer.WriteString("JOIN " + CHANNEL + "\r\n")
 					writer.Flush()
+				}
+
+				if strings.Contains(inputServer, "JOIN :") && strings.Contains(inputServer, "!") && welcome {
+					tmp := strings.Split(inputServer, "!")
+					nickname := strings.Trim(tmp[0], ":")
+					tmp2 := strings.Replace(welcome_msg, "$C", CHANNEL, -1)
+					tmp2 = strings.Replace(tmp2, "$U", nickname, -1)
+					if nickname != NICK {
+						writer.WriteString("privmsg " + CHANNEL + " :" + tmp2 + "\n")
+						writer.Flush()
+					}
 				}
 
 				fmt.Printf("Got line: %s", inputServer)
