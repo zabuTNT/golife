@@ -42,10 +42,17 @@ func main() {
 
 	password, _ := c.GetString("parameters", "password")
 	mail, _ := c.GetString("parameters", "mail")
-	commands, _ := c.GetString("parameters", "commands")
-	results, _ := c.GetString("parameters", "results")
-	com = strings.Split(commands, ";")
-	res = strings.Split(results, ";")
+	commands, _ := c.GetString("parameters", "speak")
+	//map commands
+	com = strings.Split(commands, "\n")
+	var list_com string
+	l := len(com)
+	m := make(map[string]string)
+	for i := 0; i < l; i++ {
+		var res = strings.Split(com[i], "%")
+		m[res[0]] = res[1]
+		list_com += " " + res[0] //here I store the commands
+	}
 
 	SERVER, _ := c.GetString("parameters", "server")
 	NICK, _ := c.GetString("parameters", "nick")
@@ -91,10 +98,10 @@ func main() {
 					writer.Flush()
 				}
 
-				fmt.Printf("Got line: %s \n", inputServer)
+				fmt.Printf("Got line: %s", inputServer)
 
 				if len(arrayIRCparse) >= 3 {
-					//fmt.Printf("\nDisplaying Array Parsing: \n" + arrayIRCparse[2] + "\n") //Display the first portion of the parsing
+					//Here it register or identify the bot
 					if strings.Contains(arrayIRCparse[2], "You have not registered") {
 						writer.WriteString("PRIVMSG NICKSERV : REGISTER " + password + " " + mail + "\n")
 						writer.Flush()
@@ -104,17 +111,15 @@ func main() {
 						writer.Flush()
 
 					}
-          //TODO: Do a switch for the commands
-          
+					//parse commands and output
 					if strings.HasPrefix(arrayIRCparse[2], "!") {
-						if strings.Contains(arrayIRCparse[2], com[0]) {
-							writer.WriteString("privmsg " + CHANNEL + " :" + res[0] + "\n")
-							writer.Flush()
-						} else if strings.Contains(arrayIRCparse[2], com[1]) {
-							writer.WriteString("privmsg " + CHANNEL + " :" + res[1] + "\n")
+						arrayIRCparse[2] = strings.Trim(arrayIRCparse[2], "\r\n")
+						output := m[arrayIRCparse[2]]
+						if output != "" {
+							writer.WriteString("privmsg " + CHANNEL + " :" + output + "\n")
 							writer.Flush()
 						} else {
-							writer.WriteString("privmsg " + CHANNEL + " :Available Commands: " + strings.Trim(strings.Replace(commands, ";", " ", -1), " ") + "\n")
+							writer.WriteString("privmsg " + CHANNEL + " :Available Commands:" + list_com + " \n")
 							writer.Flush()
 						}
 
